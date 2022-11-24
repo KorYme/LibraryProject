@@ -369,7 +369,7 @@ GameObject:
   - component: {fileID: 1436887906}
   - component: {fileID: 1436887905}
   m_Layer: 0
-  m_Name: Example GameObject
+  m_Name: ExampleGameObject
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -388,47 +388,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _textStyles:
-  - _content:
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    _enumType: 0
-  - _content:
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    _enumType: 0
-  - _content:
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    _enumType: 0
-  - _content:
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    - _size: 0
-      _color: {r: 0, g: 0, b: 0, a: 0}
-    _enumType: 0
-  - _content:
+    _content:
     - _size: 0
       _color: {r: 0, g: 0, b: 0, a: 0}
     - _size: 0
@@ -446,9 +406,9 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1436887904}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 3.5864983, y: 0.1487894, z: -4.1309223}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
+  m_ConstrainProportionsScale: 1
   m_Children: []
   m_Father: {fileID: 0}
   m_RootOrder: 3

@@ -4,7 +4,22 @@ using UnityEngine;
 
 public class Example : MonoBehaviour
 {
-    [SerializeField] private EnumDataContainer<TextStyle, TEXTSTYLES>[] _textStyles;
+    [SerializeField] private EnumDataContainer<TextStyle, TEXTSTYLES> _textStyles;
+
+    [ExposedField]
+    private int _playerMoney;
+
+    [ExposedField]
+    private int _playerHealth;
+    
+    [ExposedField]
+    private int _playerMaxHealth;
+    
+    [ExposedField]
+    private int _playerBullets;
+
+    [ExposedField]
+    private string _hey = "Salut";
 }
 
 public enum TEXTSTYLES
