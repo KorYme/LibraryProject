@@ -11,6 +11,8 @@ public class ExposedFieldEditorWindow : EditorWindow
 
     List<Type> _allTypes = new();
     Dictionary<GameObject, List<Component>> _allComponents = new();
+    Dictionary<GameObject, bool> _foldoutGameObject = new();
+    Dictionary<Component, bool> _foldoutComponent = new();
 
 
     [MenuItem("Tools/Modifications Variables")]
@@ -65,37 +67,50 @@ public class ExposedFieldEditorWindow : EditorWindow
                 else
                 {
                     _allComponents.Add(item.gameObject, new List<Component> { item });
+                    _foldoutGameObject.Add(item.gameObject, false);
                 }
+                _foldoutComponent.Add(item, false);
             }
         }
     }
 
     private void OnGUI()
     {
-        EditorGUILayout.LabelField("Parameters", EditorStyles.boldLabel);
-
         foreach (GameObject gameObject in _allComponents.Keys.ToArray())
         {
-            EditorGUILayout.LabelField(gameObject.name);
-            foreach (Component component in _allComponents[gameObject])
+            EditorGUILayout.Space(10);
+            _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject], gameObject.name);
+            EditorGUI.indentLevel++;
+            if (_foldoutGameObject[gameObject])
             {
-                EditorGUILayout.LabelField(component.GetType().ToString());
-                foreach (MemberInfo member in component.GetType().GetMembers(FLAGS))
+                foreach (Component component in _allComponents[gameObject])
                 {
-                    if (member.CustomAttributes.ToArray().Length > 0)
+                    EditorGUILayout.Space(2);
+                    _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
+                    EditorGUI.indentLevel++;
+                    if (_foldoutComponent[component])
                     {
-                        ExposedFieldAttribute attribute = member.GetCustomAttribute<ExposedFieldAttribute>();
-                        if (attribute != null)
+                        foreach (MemberInfo member in component.GetType().GetMembers(FLAGS))
                         {
-                            if (member.MemberType == MemberTypes.Field || member.MemberType == MemberTypes.Property)
+                            if (member.CustomAttributes.ToArray().Length > 0)
                             {
-                                FieldInfo field = (FieldInfo)member;
-                                EditorGUILayout.LabelField($"{field.Name} - {field.GetValue(component)}");
+                                ExposedFieldAttribute attribute = member.GetCustomAttribute<ExposedFieldAttribute>();
+                                if (attribute != null)
+                                {
+                                    if (member.MemberType == MemberTypes.Field || member.MemberType == MemberTypes.Property)
+                                    {
+                                        FieldInfo field = (FieldInfo)member;
+                                        EditorGUILayout.LabelField($"{field.Name} - {field.GetValue(component)}");
+                                    }
+                                }
                             }
                         }
                     }
+                    EditorGUI.indentLevel--;
                 }
             }
+            EditorGUI.indentLevel--;
+            EditorGUILayout.EndFoldoutHeaderGroup();
         }
     }
 
