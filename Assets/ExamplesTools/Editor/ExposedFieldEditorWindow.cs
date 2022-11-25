@@ -8,13 +8,14 @@ using UnityEditor;
 
 public class ExposedFieldEditorWindow : EditorWindow
 {
-    [MenuItem("Tools/Exposed Variables")]
+    [MenuItem("Tools/Modifications Variables")]
     public static void OpenWindow()
     {
-        ExposedFieldEditorWindow window = CreateWindow<ExposedFieldEditorWindow>("Exposed Variables");
+        ExposedFieldEditorWindow window = CreateWindow<ExposedFieldEditorWindow>("GD Modifications");
     }
 
     List<ExposedFieldInfo> exposedMembers = new();
+    Dictionary<string, bool> alreadyListed = new();
 
     public void OnEnable()
     {
@@ -40,15 +41,35 @@ public class ExposedFieldEditorWindow : EditorWindow
                 }
             }
         }
+        UpdateGUI();
     }
 
     private void OnGUI()
     {
         EditorGUILayout.LabelField("ExposedProperties", EditorStyles.boldLabel);
+        foreach (string key in alreadyListed.Keys.ToArray())
+        {
+            alreadyListed[key] = EditorGUILayout.BeginFoldoutHeaderGroup(alreadyListed[key], key);
+            if (alreadyListed[key])
+            {
+                foreach (ExposedFieldInfo member in exposedMembers.Where(x => x._exposedFieldAttribute._gameObjectName == key).ToList())
+                {
+                    EditorGUILayout.LabelField($"{member._exposedFieldAttribute._displayName} -");
+                }
+            }
+            EditorGUILayout.EndFoldoutHeaderGroup();
+        }
+    }
 
+    private void UpdateGUI()
+    {
+        alreadyListed.Clear();
         foreach (ExposedFieldInfo member in exposedMembers)
         {
-            EditorGUILayout.LabelField($"{member._memberInfo.ReflectedType} - {member._exposedFieldAttribute._displayName}");
+            if (!alreadyListed.ContainsKey(member._exposedFieldAttribute._gameObjectName))
+            {
+                alreadyListed.Add(member._exposedFieldAttribute._gameObjectName, false);
+            }
         }
     }
 }
