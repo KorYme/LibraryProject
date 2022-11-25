@@ -7,19 +7,19 @@ public class Example : MonoBehaviour
 {
     [SerializeField] private EnumDataContainer<TextStyle, TEXTSTYLES> _textStyles;
 
-    [ExposedField("PlayerMoney", "ExampleGameObject")]
+    [ExposedField]
     public int _playerMoney;
 
-    [ExposedField("PlayerHealth", "ExampleGameObject")]
+    [ExposedField]
     private int _playerHealth;
 
-    [ExposedField("PlayerMaxHealth", "ExampleGameObject")]
+    [ExposedField]
     private int _playerMaxHealth;
 
-    [ExposedField("PlayerBullets", "ExampleGameObject")]
+    [ExposedField]
     private int _playerBullets;
 
-    [ExposedField("Hey", "ExampleGameObject")]
+    [ExposedField]
     private string _hey = "Salut";
 }
 
