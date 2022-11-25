@@ -1,90 +1,103 @@
 using System;
 using System.Reflection;
-using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 using UnityEditor;
+using System.Linq;
 
 public class ExposedFieldEditorWindow : EditorWindow
 {
+    const BindingFlags FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+
+    List<Type> _allTypes = new();
+    Dictionary<GameObject, List<Component>> _allComponents = new();
+
+
     [MenuItem("Tools/Modifications Variables")]
     public static void OpenWindow()
     {
         ExposedFieldEditorWindow window = CreateWindow<ExposedFieldEditorWindow>("GD Modifications");
     }
 
-    List<ExposedFieldInfo> exposedMembers = new();
-    Dictionary<string, bool> alreadyListed = new();
-
     public void OnEnable()
     {
-        BindingFlags flags = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
-        Assembly[] assemblies = AppDomain.CurrentDomain.GetAssemblies();
+        UpdateGUI();
+    }
 
-        foreach (Assembly assembly in assemblies)
+    private void UpdateGUI()
+    {
+        UpdateTypes();
+        UpdateDictionary();
+    }
+
+    private void UpdateTypes()
+    {
+        _allTypes.Clear();
+        foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies())
         {
-            Type[] types = assembly.GetTypes();
-            foreach (Type type in types)
+            foreach (Type type in assembly.GetTypes())
             {
-                MemberInfo[] members = type.GetMembers(flags);
-                foreach (MemberInfo member in members)
+                foreach (MemberInfo member in type.GetMembers(FLAGS))
+                {
+                    if (member.GetCustomAttribute<ExposedFieldAttribute>() != null)
+                    {
+                        if (!_allTypes.Contains(type))
+                        {
+                            _allTypes.Add(type);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    private void UpdateDictionary()
+    {
+        _allComponents.Clear();
+        foreach (Type type in _allTypes)
+        {
+            foreach (Component item in FindObjectsOfType(type))
+            {
+                if (_allComponents.ContainsKey(item.gameObject))
+                {
+                    _allComponents[item.gameObject].Add(item);
+                }
+                else
+                {
+                    _allComponents.Add(item.gameObject, new List<Component> { item });
+                }
+            }
+        }
+    }
+
+    private void OnGUI()
+    {
+        EditorGUILayout.LabelField("Parameters", EditorStyles.boldLabel);
+
+        foreach (GameObject gameObject in _allComponents.Keys.ToArray())
+        {
+            EditorGUILayout.LabelField(gameObject.name);
+            foreach (Component component in _allComponents[gameObject])
+            {
+                EditorGUILayout.LabelField(component.GetType().ToString());
+                foreach (MemberInfo member in component.GetType().GetMembers(FLAGS))
                 {
                     if (member.CustomAttributes.ToArray().Length > 0)
                     {
                         ExposedFieldAttribute attribute = member.GetCustomAttribute<ExposedFieldAttribute>();
                         if (attribute != null)
                         {
-                            exposedMembers.Add(new ExposedFieldInfo(member, attribute));
+                            if (member.MemberType == MemberTypes.Field || member.MemberType == MemberTypes.Property)
+                            {
+                                FieldInfo field = (FieldInfo)member;
+                                EditorGUILayout.LabelField($"{field.Name} - {field.GetValue(component)}");
+                            }
                         }
                     }
                 }
             }
         }
-        UpdateGUI();
     }
 
-    private void OnGUI()
-    {
-        EditorGUILayout.LabelField("ExposedProperties", EditorStyles.boldLabel);
-        foreach (string key in alreadyListed.Keys.ToArray())
-        {
-            alreadyListed[key] = EditorGUILayout.BeginFoldoutHeaderGroup(alreadyListed[key], key);
-            if (alreadyListed[key])
-            {
-                foreach (ExposedFieldInfo member in exposedMembers.Where(x => x._exposedFieldAttribute._gameObjectName == key).ToList())
-                {
-                    EditorGUILayout.LabelField($"{member._exposedFieldAttribute._displayName} -");
-                }
-            }
-            EditorGUILayout.EndFoldoutHeaderGroup();
-        }
-    }
 
-    private void UpdateGUI()
-    {
-        alreadyListed.Clear();
-        foreach (ExposedFieldInfo member in exposedMembers)
-        {
-            if (!alreadyListed.ContainsKey(member._exposedFieldAttribute._gameObjectName))
-            {
-                alreadyListed.Add(member._exposedFieldAttribute._gameObjectName, false);
-            }
-        }
-    }
-}
-
-public struct ExposedFieldInfo
-{
-    public MemberInfo _memberInfo;
-    public ExposedFieldAttribute _exposedFieldAttribute;
-    public ExposedFieldInfo(MemberInfo info, ExposedFieldAttribute attribute)
-    {
-        _memberInfo = info;
-        _exposedFieldAttribute = attribute;
-        if (attribute._displayName == null)
-        {
-            attribute._displayName = info.Name;
-        }
-    }
 }

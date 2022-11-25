@@ -22,3 +22,8 @@ public class ExposedFieldAttribute : Attribute
         }
     }
 }
+
+public interface IModifiable
+{
+    public Component instance { get; }
+}

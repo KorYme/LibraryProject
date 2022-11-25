@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,7 +8,7 @@ public class Example : MonoBehaviour
     [SerializeField] private EnumDataContainer<TextStyle, TEXTSTYLES> _textStyles;
 
     [ExposedField("PlayerMoney", "ExampleGameObject")]
-    private int _playerMoney;
+    public int _playerMoney;
 
     [ExposedField("PlayerHealth", "ExampleGameObject")]
     private int _playerHealth;
