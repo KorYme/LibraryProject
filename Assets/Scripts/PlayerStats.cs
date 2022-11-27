@@ -1,30 +1,31 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 using UnityEngine;
 
 public class PlayerStats : MonoBehaviour
 {
-    [ExposedField]
+    [GDModif]
     [SerializeField]
     private string _playerName;
 
-    [ExposedField]
+    [GDModif]
     [SerializeField]
     private int _currentHealth;
 
-    [ExposedField]
+    [GDModif]
     [SerializeField]
     private int _maxHealth;
 
-    [ExposedField]
+    [GDModif]
     [SerializeField]
     private float _speed;
 
-    [ExposedField]
+    [GDModif]
     [SerializeField]
     private float _damage;
 
-    [ExposedField]
+    [GDModif]
     [SerializeField]
     private Rigidbody rb;
 }

@@ -5,7 +5,7 @@ using Unity.VisualScripting;
 using UnityEngine;
 
 [AttributeUsage(AttributeTargets.Field)]
-public class ExposedFieldAttribute : Attribute
+public class GDModifAttribute : Attribute
 {
-    public ExposedFieldAttribute() { }
+    public GDModifAttribute() { }
 }

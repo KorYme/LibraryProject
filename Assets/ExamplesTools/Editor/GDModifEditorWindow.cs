@@ -5,10 +5,10 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 using ToolLibrary;
+using UnityEditor.SceneManagement;
 
-public class ExposedFieldEditorWindow : EditorWindow
+public class GDModifEditorWindow : EditorWindow
 {
-    
     Vector2 _scrollPos;
     bool _isHierarchised;
 
@@ -32,18 +32,20 @@ public class ExposedFieldEditorWindow : EditorWindow
         }
     }
 
-
-
-    [MenuItem("Tools/Modifications Variables")]
+    [MenuItem("Tools/GD Modifications")]
     public static void OpenWindow()
     {
-        ExposedFieldEditorWindow window = CreateWindow<ExposedFieldEditorWindow>("GD Modifications");
+        GDModifEditorWindow window = CreateWindow<GDModifEditorWindow>("GD Modifications");
     }
 
     public void OnEnable()
     {
         UpdateGUI();
-        _scrollPos = Vector2.zero;
+    }
+
+    private void OnHierarchyChange()
+    {
+        UpdateGUI();
     }
 
     private void UpdateGUI()
@@ -51,6 +53,7 @@ public class ExposedFieldEditorWindow : EditorWindow
         UpdateTypes();
         UpdateDictionary();
         CreateBinaryTree();
+        _scrollPos = Vector2.zero;
     }
 
     private void UpdateTypes()
@@ -62,7 +65,7 @@ public class ExposedFieldEditorWindow : EditorWindow
             {
                 foreach (MemberInfo member in type.GetMembers(ToolLibraryClass.FLAGS_FIELDS))
                 {
-                    if (member.GetCustomAttribute<ExposedFieldAttribute>() != null)
+                    if (member.GetCustomAttribute<GDModifAttribute>() != null)
                     {
                         if (!_allTypes.Contains(type))
                         {
@@ -88,7 +91,7 @@ public class ExposedFieldEditorWindow : EditorWindow
                 {
                     if (member.CustomAttributes.ToArray().Length > 0)
                     {
-                        ExposedFieldAttribute attribute = member.GetCustomAttribute<ExposedFieldAttribute>();
+                        GDModifAttribute attribute = member.GetCustomAttribute<GDModifAttribute>();
                         if (attribute != null)
                         {
                             if (member.MemberType == MemberTypes.Field || member.MemberType == MemberTypes.Property)
@@ -119,13 +122,14 @@ public class ExposedFieldEditorWindow : EditorWindow
         for (int i = 0; i < _allNodes.Count; i++)
         {
             Transform tempParent = _allNodes[i]._go.transform.parent;
-            while (tempParent.parent != null && _allNodes[i]._isOriginal)
+            while (tempParent != null && _allNodes[i]._isOriginal)
             {
                 if (_allComponents.Keys.ToList().Contains(tempParent.gameObject))
                 {
                     _allNodes[i]._isOriginal = false;
                     _allNodes.Find(x=>x._go == tempParent.gameObject)._allChilds.Add(_allNodes[i]);
                 }
+                tempParent= tempParent.parent;
             }
         }
     }
@@ -146,7 +150,6 @@ public class ExposedFieldEditorWindow : EditorWindow
     {
         _scrollPos = GUILayout.BeginScrollView(_scrollPos);
         EditorGUILayout.BeginHorizontal();
-        _isHierarchised = EditorGUILayout.Toggle(new GUIContent("Hierarchy"), _isHierarchised);
         if (GUILayout.Button("Open All"))
         {
             OpenAllFoldout(true);
@@ -155,25 +158,22 @@ public class ExposedFieldEditorWindow : EditorWindow
         {
             OpenAllFoldout(false);
         }
-        if (GUILayout.Button("Refresh"))
-        {
-            UpdateGUI();
-        }
+        _isHierarchised = EditorGUILayout.ToggleLeft(new GUIContent("Hierarchy"), _isHierarchised);
         EditorGUILayout.EndHorizontal();
+        EditorGUILayout.BeginVertical();
         if (!_isHierarchised)
         {
-            EditorGUILayout.BeginVertical();
-            foreach (GameObject gameObject in _allComponents.Keys.ToArray().OrderBy(x => x.name))
+            foreach (GameObject gameObject in _allComponents.Keys.ToArray().OrderBy(x => x.transform.GetSiblingIndex()))
             {
                 EditorGUILayout.Space(10);
-                _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject], gameObject.name);
+                _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject], "[GAMEOBJECT] " + gameObject.name);
                 EditorGUI.indentLevel++;
                 if (_foldoutGameObject[gameObject])
                 {
                     foreach (Component component in _allComponents[gameObject].Keys.ToArray().OrderBy(x => x.name))
                     {
                         EditorGUILayout.Space(2);
-                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
+                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], "[COMPONENT] " + component.GetType().ToString());
                         EditorGUI.indentLevel++;
                         if (_foldoutComponent[component])
                         {
@@ -190,23 +190,20 @@ public class ExposedFieldEditorWindow : EditorWindow
                 EditorGUI.indentLevel--;
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
-            EditorGUILayout.Space(30);
-            EditorGUILayout.EndVertical();
         }
         else
         {
-            EditorGUILayout.BeginVertical();
-            foreach (Node node in _allNodes.Where(x=>x._isOriginal).OrderBy(x => x._go.name))
+            foreach (Node node in _allNodes.Where(x=>x._isOriginal).OrderBy(x => x._go.transform.GetSiblingIndex()))
             {
                 EditorGUILayout.Space(10);
-                _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], node._go.name);
+                _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], "[GAMEOBJECT] " + node._go.name);
                 EditorGUI.indentLevel++;
                 if (_foldoutGameObject[node._go])
                 {
                     foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                     {
                         EditorGUILayout.Space(2);
-                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
+                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], "[COMPONENT] " + component.GetType().ToString());
                         EditorGUI.indentLevel++;
                         if (_foldoutComponent[component])
                         {
@@ -224,25 +221,25 @@ public class ExposedFieldEditorWindow : EditorWindow
                 EditorGUI.indentLevel--;
                 EditorGUILayout.EndFoldoutHeaderGroup();
             }
-            EditorGUILayout.Space(30);
-            EditorGUILayout.EndVertical();
         }
+        EditorGUILayout.Space(30);
+        EditorGUILayout.EndVertical();
         GUILayout.EndScrollView();
     }
 
     private void DisplayChildGameObjects(List<Node> allChilds)
     {
-        foreach (Node node in allChilds.OrderBy(x => x._go.name))
+        foreach (Node node in allChilds.OrderBy(x => x._go.transform.GetSiblingIndex()))
         {
             EditorGUILayout.Space(10);
-            _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], node._go.name);
+            _foldoutGameObject[node._go] = EditorGUILayout.Foldout(_foldoutGameObject[node._go], "[GAMEOBJECT] " + node._go.name);
             EditorGUI.indentLevel++;
             if (_foldoutGameObject[node._go])
             {
                 foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                 {
                     EditorGUILayout.Space(2);
-                    _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
+                    _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], "[COMPONENT] " + component.GetType().ToString());
                     EditorGUI.indentLevel++;
                     if (_foldoutComponent[component])
                     {
@@ -258,7 +255,6 @@ public class ExposedFieldEditorWindow : EditorWindow
                 DisplayChildGameObjects(node._allChilds);
             }
             EditorGUI.indentLevel--;
-            EditorGUILayout.EndFoldoutHeaderGroup();
         }
     }
 }
