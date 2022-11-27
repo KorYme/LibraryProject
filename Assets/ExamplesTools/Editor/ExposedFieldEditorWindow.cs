@@ -4,18 +4,34 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
 using System.Linq;
-using TMPro;
+using ToolLibrary;
 
 public class ExposedFieldEditorWindow : EditorWindow
 {
-    const BindingFlags FLAGS = BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic;
+    
+    Vector2 _scrollPos;
+    bool _isHierarchised;
 
     List<Type> _allTypes = new();
-    Dictionary<GameObject, Dictionary<Component, List<MemberInfo>>> _allComponents = new();
+    Dictionary<GameObject, Dictionary<Component, Tuple<SerializedObject, List<FieldInfo>>>> _allComponents = new();
     Dictionary<GameObject, bool> _foldoutGameObject = new();
     Dictionary<Component, bool> _foldoutComponent = new();
+    List<Node> _allNodes = new();
 
-    Vector2 _scrollPos;
+    class Node
+    {
+        public GameObject _go;
+        public bool _isOriginal;
+        public List<Node> _allChilds;
+
+        public Node(GameObject go, bool isOriginal, List<Node> nodes)
+        {
+            _go = go;
+            _isOriginal = isOriginal;
+            _allChilds = nodes;
+        }
+    }
+
 
 
     [MenuItem("Tools/Modifications Variables")]
@@ -34,6 +50,7 @@ public class ExposedFieldEditorWindow : EditorWindow
     {
         UpdateTypes();
         UpdateDictionary();
+        CreateBinaryTree();
     }
 
     private void UpdateTypes()
@@ -43,7 +60,7 @@ public class ExposedFieldEditorWindow : EditorWindow
         {
             foreach (Type type in assembly.GetTypes())
             {
-                foreach (MemberInfo member in type.GetMembers(FLAGS))
+                foreach (MemberInfo member in type.GetMembers(ToolLibraryClass.FLAGS_FIELDS))
                 {
                     if (member.GetCustomAttribute<ExposedFieldAttribute>() != null)
                     {
@@ -64,10 +81,10 @@ public class ExposedFieldEditorWindow : EditorWindow
         _foldoutGameObject.Clear();
         foreach (Type type in _allTypes)
         {
-            foreach (Component item in FindObjectsOfType(type))
+            foreach (Component component in FindObjectsOfType(type))
             {
-                List<MemberInfo> allMembers = new();
-                foreach (MemberInfo member in item.GetType().GetMembers(FLAGS))
+                List<FieldInfo> allFields = new();
+                foreach (MemberInfo member in component.GetType().GetMembers(ToolLibraryClass.FLAGS_FIELDS))
                 {
                     if (member.CustomAttributes.ToArray().Length > 0)
                     {
@@ -76,18 +93,39 @@ public class ExposedFieldEditorWindow : EditorWindow
                         {
                             if (member.MemberType == MemberTypes.Field || member.MemberType == MemberTypes.Property)
                             {
-                                allMembers.Add(member);
+                                allFields.Add((FieldInfo)member);
                             }
                         }
                     }
                 }
-                if (!_allComponents.ContainsKey(item.gameObject))
+                if (!_allComponents.ContainsKey(component.gameObject))
                 {
-                    _allComponents.Add(item.gameObject, new());
-                    _foldoutGameObject.Add(item.gameObject, false);
+                    _allComponents.Add(component.gameObject, new());
+                    _foldoutGameObject.Add(component.gameObject, false);
                 }
-                _allComponents[item.gameObject].Add(item, allMembers);
-                _foldoutComponent.Add(item, false);
+                _allComponents[component.gameObject].Add(component, Tuple.Create(new SerializedObject(component), allFields));
+                _foldoutComponent.Add(component, false);
+            }
+        }
+    }
+
+    private void CreateBinaryTree()
+    {
+        _allNodes.Clear();
+        foreach (GameObject go in _allComponents.Keys.ToArray())
+        {
+            _allNodes.Add(new Node(go, true, new()));
+        }
+        for (int i = 0; i < _allNodes.Count; i++)
+        {
+            Transform tempParent = _allNodes[i]._go.transform.parent;
+            while (tempParent.parent != null && _allNodes[i]._isOriginal)
+            {
+                if (_allComponents.Keys.ToList().Contains(tempParent.gameObject))
+                {
+                    _allNodes[i]._isOriginal = false;
+                    _allNodes.Find(x=>x._go == tempParent.gameObject)._allChilds.Add(_allNodes[i]);
+                }
             }
         }
     }
@@ -108,6 +146,7 @@ public class ExposedFieldEditorWindow : EditorWindow
     {
         _scrollPos = GUILayout.BeginScrollView(_scrollPos);
         EditorGUILayout.BeginHorizontal();
+        _isHierarchised = EditorGUILayout.Toggle(new GUIContent("Hierarchy"), _isHierarchised);
         if (GUILayout.Button("Open All"))
         {
             OpenAllFoldout(true);
@@ -120,37 +159,106 @@ public class ExposedFieldEditorWindow : EditorWindow
         {
             UpdateGUI();
         }
-
         EditorGUILayout.EndHorizontal();
-        foreach (GameObject gameObject in _allComponents.Keys.ToArray())
+        if (!_isHierarchised)
+        {
+            EditorGUILayout.BeginVertical();
+            foreach (GameObject gameObject in _allComponents.Keys.ToArray().OrderBy(x => x.name))
+            {
+                EditorGUILayout.Space(10);
+                _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject], gameObject.name);
+                EditorGUI.indentLevel++;
+                if (_foldoutGameObject[gameObject])
+                {
+                    foreach (Component component in _allComponents[gameObject].Keys.ToArray().OrderBy(x => x.name))
+                    {
+                        EditorGUILayout.Space(2);
+                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
+                        EditorGUI.indentLevel++;
+                        if (_foldoutComponent[component])
+                        {
+                            foreach (FieldInfo field in _allComponents[gameObject][component].Item2)
+                            {
+                                SerializedProperty serializedProperty = _allComponents[gameObject][component].Item1.FindProperty(field.Name);
+                                EditorGUILayout.PropertyField(serializedProperty, new GUIContent(ToolLibraryClass.FieldName(field.Name)));
+                                field.SetValue(component, ToolLibraryClass.GetValue(serializedProperty));
+                            }
+                        }
+                        EditorGUI.indentLevel--;
+                    }
+                }
+                EditorGUI.indentLevel--;
+                EditorGUILayout.EndFoldoutHeaderGroup();
+            }
+            EditorGUILayout.Space(30);
+            EditorGUILayout.EndVertical();
+        }
+        else
+        {
+            EditorGUILayout.BeginVertical();
+            foreach (Node node in _allNodes.Where(x=>x._isOriginal).OrderBy(x => x._go.name))
+            {
+                EditorGUILayout.Space(10);
+                _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], node._go.name);
+                EditorGUI.indentLevel++;
+                if (_foldoutGameObject[node._go])
+                {
+                    foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
+                    {
+                        EditorGUILayout.Space(2);
+                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
+                        EditorGUI.indentLevel++;
+                        if (_foldoutComponent[component])
+                        {
+                            foreach (FieldInfo field in _allComponents[node._go][component].Item2)
+                            {
+                                SerializedProperty serializedProperty = _allComponents[node._go][component].Item1.FindProperty(field.Name);
+                                EditorGUILayout.PropertyField(serializedProperty, new GUIContent(ToolLibraryClass.FieldName(field.Name)));
+                                field.SetValue(component, ToolLibraryClass.GetValue(serializedProperty));
+                            }
+                        }
+                        EditorGUI.indentLevel--;
+                    }
+                    DisplayChildGameObjects(node._allChilds);
+                }
+                EditorGUI.indentLevel--;
+                EditorGUILayout.EndFoldoutHeaderGroup();
+            }
+            EditorGUILayout.Space(30);
+            EditorGUILayout.EndVertical();
+        }
+        GUILayout.EndScrollView();
+    }
+
+    private void DisplayChildGameObjects(List<Node> allChilds)
+    {
+        foreach (Node node in allChilds.OrderBy(x => x._go.name))
         {
             EditorGUILayout.Space(10);
-            _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject], gameObject.name);
+            _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], node._go.name);
             EditorGUI.indentLevel++;
-            if (_foldoutGameObject[gameObject])
+            if (_foldoutGameObject[node._go])
             {
-                foreach (Component component in _allComponents[gameObject].Keys.ToArray())
+                foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                 {
                     EditorGUILayout.Space(2);
                     _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], component.GetType().ToString());
                     EditorGUI.indentLevel++;
                     if (_foldoutComponent[component])
                     {
-                        foreach (MemberInfo member in _allComponents[gameObject][component])
+                        foreach (FieldInfo field in _allComponents[node._go][component].Item2)
                         {
-                            FieldInfo field = (FieldInfo)member;
-                            EditorGUILayout.LabelField($"{field.Name} - {field.GetValue(component)}"); //TRAITOR A MODIFIER
+                            SerializedProperty serializedProperty = _allComponents[node._go][component].Item1.FindProperty(field.Name);
+                            EditorGUILayout.PropertyField(serializedProperty, new GUIContent(ToolLibraryClass.FieldName(field.Name)));
+                            field.SetValue(component, ToolLibraryClass.GetValue(serializedProperty));
                         }
                     }
                     EditorGUI.indentLevel--;
                 }
+                DisplayChildGameObjects(node._allChilds);
             }
             EditorGUI.indentLevel--;
             EditorGUILayout.EndFoldoutHeaderGroup();
         }
-        EditorGUILayout.Space(30);
-        GUILayout.EndScrollView();
     }
-
-
 }
