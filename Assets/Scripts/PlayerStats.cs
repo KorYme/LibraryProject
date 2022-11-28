@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using UnityEngine;
+using ToolLibrary;
 
 public class PlayerStats : MonoBehaviour
 {
@@ -11,7 +12,7 @@ public class PlayerStats : MonoBehaviour
 
     [GDModif]
     [SerializeField]
-    private int _currentHealth;
+    private Vector3 _currentHealth;
 
     [GDModif]
     [SerializeField]
