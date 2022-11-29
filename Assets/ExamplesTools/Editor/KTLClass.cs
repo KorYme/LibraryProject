@@ -115,6 +115,16 @@ public sealed class KTLClass
         style.normal.textColor = Color.white;
         return style;
     }
+
+    public static string ColorToText(Color color)
+    {
+        return "#" + ColorUtility.ToHtmlStringRGB(color).ToLower();
+    }
+
+    public static string DisplayTextWithColours(string text, Color color)
+    {
+        return "<color=" + ColorToText(color) + ">" + text + "</color>";
+    }
 }
 
 public static class AttributeSearcher

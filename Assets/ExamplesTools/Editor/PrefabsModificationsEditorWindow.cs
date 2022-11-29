@@ -13,7 +13,7 @@ public class PrefabsModificationsEditorWindow : EditorWindow
 
     SerializedObject _prefabsObj;
 
-    [MenuItem("Tools/GD Tools/Prefabs Modifications")]
+    [MenuItem("Fabien's courses/GD Tools/Prefabs Modifications")]
     public static void OpenWindow()
     {
         PrefabsModificationsEditorWindow window = CreateWindow<PrefabsModificationsEditorWindow>("Prefabs Modifications");

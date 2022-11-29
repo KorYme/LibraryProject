@@ -23,7 +23,12 @@ public class SceneModificationsEditorWindow : EditorWindow
     }
 
     Vector2 _scrollPos;
+    bool _areParametersOpened;
     bool _isHierarchised;
+    Color _colorParametersLabel;
+    Color _colorGameObjectLabel;
+    Color _colorComponentLabel;
+
 
     List<Type> _allTypes = new();
     Dictionary<GameObject, Dictionary<Component, Tuple<SerializedObject, List<FieldInfo>>>> _allComponents = new();
@@ -32,7 +37,7 @@ public class SceneModificationsEditorWindow : EditorWindow
     List<Node> _allNodes = new();
 
 
-    [MenuItem("Tools/GD Tools/Scene Modifications")]
+    [MenuItem("Fabien's courses/GD Tools/Scene Modifications")]
     public static void OpenWindow()
     {
         SceneModificationsEditorWindow window = CreateWindow<SceneModificationsEditorWindow>("Scene Modifications");
@@ -42,6 +47,19 @@ public class SceneModificationsEditorWindow : EditorWindow
     public void OnEnable()
     {
         InitAllContainers();
+        Color transparent = new Color(0, 0, 0, 0);
+        if (_colorParametersLabel == transparent)
+        {
+            _colorParametersLabel = GUI.color;
+        }
+        if (_colorComponentLabel == transparent)
+        {
+            _colorComponentLabel = GUI.color;
+        }
+        if (_colorGameObjectLabel == transparent)
+        {
+            _colorGameObjectLabel = GUI.color;
+        }
     }
 
     private void OnHierarchyChange()
@@ -61,28 +79,41 @@ public class SceneModificationsEditorWindow : EditorWindow
         {
             OpenAllFoldout(false);
         }
-        _isHierarchised = EditorGUILayout.ToggleLeft(new GUIContent("Hierarchy"), _isHierarchised);
         EditorGUILayout.EndHorizontal();
+        if (_areParametersOpened = EditorGUILayout.Foldout(_areParametersOpened, KTLClass.DisplayTextWithColours("[PARAMETERS] ",
+            _colorParametersLabel), true, KTLClass.ToRichText("foldout")))
+        {
+            EditorGUI.indentLevel++;
+            _isHierarchised = EditorGUILayout.ToggleLeft(new GUIContent("Hierarchy"), _isHierarchised);
+            _colorParametersLabel = EditorGUILayout.ColorField(new GUIContent("Parameters color"), _colorParametersLabel);
+            _colorGameObjectLabel = EditorGUILayout.ColorField(new GUIContent("Parameters color"), _colorGameObjectLabel);
+            _colorComponentLabel = EditorGUILayout.ColorField(new GUIContent("Parameters color"), _colorComponentLabel);
+            EditorGUI.indentLevel--;
+        }
+        EditorGUILayout.Space(15);
+        EditorGUILayout.LabelField("[ALLFIELDS]", EditorStyles.boldLabel);
+        EditorGUI.indentLevel++;
         EditorGUILayout.BeginVertical();
         if (!_isHierarchised)
         {
             foreach (GameObject gameObject in _allComponents.Keys.ToArray().OrderBy(x => x.transform.GetSiblingIndex()))
             {
                 EditorGUILayout.Space(10);
-                _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject],
-                    "[GAMEOBJECT] " + gameObject.name, KTLClass.ToRichText("foldout"));
-                EditorGUI.indentLevel++;
-                if (_foldoutGameObject[gameObject])
+                if (_foldoutGameObject[gameObject] = EditorGUILayout.Foldout(_foldoutGameObject[gameObject],
+                    KTLClass.DisplayTextWithColours("[GAMEOBJECT] ", _colorGameObjectLabel) + gameObject.name, true, KTLClass.ToRichText("foldout")))
                 {
-                    using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject", gameObject, typeof(GameObject), false);
+                    EditorGUI.indentLevel++;
+                    EditorGUILayout.Space(10);
+                    using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject",
+                        gameObject, typeof(GameObject), false);
                     foreach (Component component in _allComponents[gameObject].Keys.ToArray().OrderBy(x => x.name))
                     {
                         EditorGUILayout.Space(2);
-                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], 
-                            "[COMPONENT] " + component.GetType().ToString(), true, KTLClass.ToRichText("foldout"));
-                        EditorGUI.indentLevel++;
-                        if (_foldoutComponent[component])
+                        if (_foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component],
+                            KTLClass.DisplayTextWithColours("[COMPONENT] ", _colorComponentLabel) + component.GetType().ToString(),
+                            true, KTLClass.ToRichText("foldout")))
                         {
+                            EditorGUI.indentLevel++;
                             foreach (FieldInfo field in _allComponents[gameObject][component].Item2)
                             {
                                 SerializedProperty serializedProperty = _allComponents[gameObject][component].Item1.FindProperty(field.Name);
@@ -93,33 +124,32 @@ public class SceneModificationsEditorWindow : EditorWindow
                                     _allComponents[gameObject][component].Item1.ApplyModifiedProperties();
                                 }
                             }
+                            EditorGUI.indentLevel--;
                         }
-                        EditorGUI.indentLevel--;
                     }
+                    EditorGUI.indentLevel--;
                 }
-                EditorGUI.indentLevel--;
-                EditorGUILayout.EndFoldoutHeaderGroup();
             }
         }
         else
         {
+
             foreach (Node node in _allNodes.Where(x=>x._isOriginal).OrderBy(x => x._go.transform.GetSiblingIndex()))
             {
                 EditorGUILayout.Space(10);
-                _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], 
-                    "[GAMEOBJECT] " + node._go.name, KTLClass.ToRichText("foldout"));
-                EditorGUI.indentLevel++;
-                if (_foldoutGameObject[node._go])
+                if (_foldoutGameObject[node._go] = EditorGUILayout.Foldout(_foldoutGameObject[node._go],
+                    KTLClass.DisplayTextWithColours("[GAMEOBJECT] ", _colorGameObjectLabel) + node._go.name, true, KTLClass.ToRichText("foldout")))
                 {
+                    EditorGUI.indentLevel++;
                     using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject", node._go, typeof(GameObject), false);
                     foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                     {
                         EditorGUILayout.Space(2);
-                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], 
-                            "[COMPONENT] " + component.GetType().ToString(), true, KTLClass.ToRichText("foldout"));
-                        EditorGUI.indentLevel++;
-                        if (_foldoutComponent[component])
+                        if (_foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component],
+                            KTLClass.DisplayTextWithColours("[COMPONENT] ", _colorComponentLabel) + component.GetType().ToString(), 
+                            true, KTLClass.ToRichText("foldout")))
                         {
+                            EditorGUI.indentLevel++;
                             foreach (FieldInfo field in _allComponents[node._go][component].Item2)
                             {
                                 SerializedProperty serializedProperty = _allComponents[node._go][component].Item1.FindProperty(field.Name);
@@ -130,13 +160,12 @@ public class SceneModificationsEditorWindow : EditorWindow
                                     _allComponents[node._go][component].Item1.ApplyModifiedProperties();
                                 }
                             }
+                            EditorGUI.indentLevel--;
                         }
-                        EditorGUI.indentLevel--;
                     }
                     DisplayChildGameObjects(node._allChilds);
+                    EditorGUI.indentLevel--;
                 }
-                EditorGUI.indentLevel--;
-                EditorGUILayout.EndFoldoutHeaderGroup();
             }
         }
         EditorGUILayout.Space(30);
@@ -334,20 +363,18 @@ public class SceneModificationsEditorWindow : EditorWindow
         foreach (Node node in allChilds.OrderBy(x => x._go.transform.GetSiblingIndex()))
         {
             EditorGUILayout.Space(10);
-            _foldoutGameObject[node._go] = EditorGUILayout.Foldout(_foldoutGameObject[node._go], 
-                "[GAMEOBJECT] " + node._go.name, true, KTLClass.ToRichText("foldout"));
-            EditorGUI.indentLevel++;
-            if (_foldoutGameObject[node._go])
+            if (_foldoutGameObject[node._go] = EditorGUILayout.Foldout(_foldoutGameObject[node._go],
+                KTLClass.DisplayTextWithColours("[GAMEOBJECT] ", _colorGameObjectLabel) + node._go.name, true, KTLClass.ToRichText("foldout")))
             {
+                EditorGUI.indentLevel++;
                 using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject", node._go, typeof(GameObject), false);
                 foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                 {
                     EditorGUILayout.Space(2);
-                    _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], 
-                        "<color=blue>[COMPONENT] </color>" + component.GetType().ToString(), false, KTLClass.ToRichText("foldout"));
-                    EditorGUI.indentLevel++;
-                    if (_foldoutComponent[component])
+                    if (_foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], KTLClass.DisplayTextWithColours("[COMPONENT] ",
+                        _colorComponentLabel) + component.GetType().ToString(), false, KTLClass.ToRichText("foldout")))
                     {
+                        EditorGUI.indentLevel++;
                         foreach (FieldInfo field in _allComponents[node._go][component].Item2)
                         {
                             SerializedProperty serializedProperty = _allComponents[node._go][component].Item1.FindProperty(field.Name);
@@ -358,12 +385,12 @@ public class SceneModificationsEditorWindow : EditorWindow
                                 _allComponents[node._go][component].Item1.ApplyModifiedProperties();
                             }
                         }
+                        EditorGUI.indentLevel--;
                     }
-                    EditorGUI.indentLevel--;
                 }
                 DisplayChildGameObjects(node._allChilds);
+                EditorGUI.indentLevel--;
             }
-            EditorGUI.indentLevel--;
         }
     }
 
