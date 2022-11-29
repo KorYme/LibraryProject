@@ -24,9 +24,16 @@ public class PlayerStats : MonoBehaviour
 
     [GDModif]
     [SerializeField]
-    private float _damage;
+    private DAMAGETYPE _damage;
 
     [GDModif]
     [SerializeField]
     private Rigidbody rb;
+
+    public enum DAMAGETYPE
+    {
+        NONE,
+        PHYSICAL,
+        MAGICAL
+    }
 }

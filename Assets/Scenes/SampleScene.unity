@@ -361,10 +361,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerName: Gentil
-  _currentHealth: {x: 0, y: 0, z: 0}
-  _maxHealth: 18
-  _speed: 0
-  _damage: 0
+  _currentHealth: {x: 2.61, y: -4.14, z: 1.44}
+  _maxHealth: 84
+  _speed: 0.11
+  _damage: 1
   rb: {fileID: 653832589}
 --- !u!4 &653832588
 Transform:

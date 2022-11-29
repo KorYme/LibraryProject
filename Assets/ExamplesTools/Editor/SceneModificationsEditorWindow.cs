@@ -5,7 +5,6 @@ using UnityEngine;
 using UnityEditor;
 using System.Linq;
 using ToolLibrary;
-using UnityEditor.SceneManagement;
 
 public class SceneModificationsEditorWindow : EditorWindow
 {
@@ -70,14 +69,17 @@ public class SceneModificationsEditorWindow : EditorWindow
             foreach (GameObject gameObject in _allComponents.Keys.ToArray().OrderBy(x => x.transform.GetSiblingIndex()))
             {
                 EditorGUILayout.Space(10);
-                _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject], "[GAMEOBJECT] " + gameObject.name);
+                _foldoutGameObject[gameObject] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[gameObject],
+                    "[GAMEOBJECT] " + gameObject.name, KTLClass.ToRichText("foldout"));
                 EditorGUI.indentLevel++;
                 if (_foldoutGameObject[gameObject])
                 {
+                    using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject", gameObject, typeof(GameObject), false);
                     foreach (Component component in _allComponents[gameObject].Keys.ToArray().OrderBy(x => x.name))
                     {
                         EditorGUILayout.Space(2);
-                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], "[COMPONENT] " + component.GetType().ToString());
+                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], 
+                            "[COMPONENT] " + component.GetType().ToString(), true, KTLClass.ToRichText("foldout"));
                         EditorGUI.indentLevel++;
                         if (_foldoutComponent[component])
                         {
@@ -85,10 +87,10 @@ public class SceneModificationsEditorWindow : EditorWindow
                             {
                                 SerializedProperty serializedProperty = _allComponents[gameObject][component].Item1.FindProperty(field.Name);
                                 EditorGUI.BeginChangeCheck();
-                                EditorGUILayout.PropertyField(serializedProperty, new GUIContent(ToolLibraryClass.FieldName(field.Name)));
+                                EditorGUILayout.PropertyField(serializedProperty, new GUIContent(KTLClass.FieldName(field.Name)));
                                 if (EditorGUI.EndChangeCheck())
                                 {
-                                    field.SetValue(component, ToolLibraryClass.GetValue(serializedProperty));
+                                    _allComponents[gameObject][component].Item1.ApplyModifiedProperties();
                                 }
                             }
                         }
@@ -104,14 +106,17 @@ public class SceneModificationsEditorWindow : EditorWindow
             foreach (Node node in _allNodes.Where(x=>x._isOriginal).OrderBy(x => x._go.transform.GetSiblingIndex()))
             {
                 EditorGUILayout.Space(10);
-                _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], "[GAMEOBJECT] " + node._go.name);
+                _foldoutGameObject[node._go] = EditorGUILayout.BeginFoldoutHeaderGroup(_foldoutGameObject[node._go], 
+                    "[GAMEOBJECT] " + node._go.name, KTLClass.ToRichText("foldout"));
                 EditorGUI.indentLevel++;
                 if (_foldoutGameObject[node._go])
                 {
+                    using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject", node._go, typeof(GameObject), false);
                     foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                     {
                         EditorGUILayout.Space(2);
-                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], "[COMPONENT] " + component.GetType().ToString());
+                        _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], 
+                            "[COMPONENT] " + component.GetType().ToString(), true, KTLClass.ToRichText("foldout"));
                         EditorGUI.indentLevel++;
                         if (_foldoutComponent[component])
                         {
@@ -119,10 +124,10 @@ public class SceneModificationsEditorWindow : EditorWindow
                             {
                                 SerializedProperty serializedProperty = _allComponents[node._go][component].Item1.FindProperty(field.Name);
                                 EditorGUI.BeginChangeCheck();
-                                EditorGUILayout.PropertyField(serializedProperty, new GUIContent(ToolLibraryClass.FieldName(field.Name)));
+                                EditorGUILayout.PropertyField(serializedProperty, new GUIContent(KTLClass.FieldName(field.Name)));
                                 if (EditorGUI.EndChangeCheck())
                                 {
-                                    field.SetValue(component, ToolLibraryClass.GetValue(serializedProperty));
+                                    _allComponents[node._go][component].Item1.ApplyModifiedProperties();
                                 }
                             }
                         }
@@ -157,7 +162,7 @@ public class SceneModificationsEditorWindow : EditorWindow
         {
             foreach (Type type in assembly.GetTypes())
             {
-                foreach (MemberInfo member in type.GetMembers(ToolLibraryClass.FLAGS_FIELDS))
+                foreach (MemberInfo member in type.GetMembers(KTLClass.FLAGS_FIELDS))
                 {
                     if (member.GetCustomAttribute<GDModifAttribute>() != null)
                     {
@@ -181,7 +186,7 @@ public class SceneModificationsEditorWindow : EditorWindow
             foreach (Component component in FindObjectsOfType(type))
             {
                 List<FieldInfo> allFields = new();
-                foreach (MemberInfo member in component.GetType().GetMembers(ToolLibraryClass.FLAGS_FIELDS))
+                foreach (MemberInfo member in component.GetType().GetMembers(KTLClass.FLAGS_FIELDS))
                 {
                     if (member.CustomAttributes.ToArray().Length > 0)
                     {
@@ -281,7 +286,7 @@ public class SceneModificationsEditorWindow : EditorWindow
                     !_allComponents.ContainsKey(component.gameObject))
                 {
                     List<FieldInfo> allFields = new();
-                    foreach (MemberInfo member in component.GetType().GetMembers(ToolLibraryClass.FLAGS_FIELDS))
+                    foreach (MemberInfo member in component.GetType().GetMembers(KTLClass.FLAGS_FIELDS))
                     {
                         if (member.CustomAttributes.ToArray().Length > 0)
                         {
@@ -329,14 +334,17 @@ public class SceneModificationsEditorWindow : EditorWindow
         foreach (Node node in allChilds.OrderBy(x => x._go.transform.GetSiblingIndex()))
         {
             EditorGUILayout.Space(10);
-            _foldoutGameObject[node._go] = EditorGUILayout.Foldout(_foldoutGameObject[node._go], "[GAMEOBJECT] " + node._go.name);
+            _foldoutGameObject[node._go] = EditorGUILayout.Foldout(_foldoutGameObject[node._go], 
+                "[GAMEOBJECT] " + node._go.name, true, KTLClass.ToRichText("foldout"));
             EditorGUI.indentLevel++;
             if (_foldoutGameObject[node._go])
             {
+                using (new EditorGUI.DisabledScope(true)) EditorGUILayout.ObjectField("GameObject", node._go, typeof(GameObject), false);
                 foreach (Component component in _allComponents[node._go].Keys.ToArray().OrderBy(x => x.name))
                 {
                     EditorGUILayout.Space(2);
-                    _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], "[COMPONENT] " + component.GetType().ToString());
+                    _foldoutComponent[component] = EditorGUILayout.Foldout(_foldoutComponent[component], 
+                        "<color=blue>[COMPONENT] </color>" + component.GetType().ToString(), false, KTLClass.ToRichText("foldout"));
                     EditorGUI.indentLevel++;
                     if (_foldoutComponent[component])
                     {
@@ -344,10 +352,10 @@ public class SceneModificationsEditorWindow : EditorWindow
                         {
                             SerializedProperty serializedProperty = _allComponents[node._go][component].Item1.FindProperty(field.Name);
                             EditorGUI.BeginChangeCheck();
-                            EditorGUILayout.PropertyField(serializedProperty, new GUIContent(ToolLibraryClass.FieldName(field.Name)));
+                            EditorGUILayout.PropertyField(serializedProperty, new GUIContent(KTLClass.FieldName(field.Name)));
                             if (EditorGUI.EndChangeCheck())
                             {
-                                field.SetValue(component, ToolLibraryClass.GetValue(serializedProperty));
+                                _allComponents[node._go][component].Item1.ApplyModifiedProperties();
                             }
                         }
                     }
