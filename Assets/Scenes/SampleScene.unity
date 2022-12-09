@@ -339,7 +339,6 @@ GameObject:
   m_Component:
   - component: {fileID: 653832588}
   - component: {fileID: 653832589}
-  - component: {fileID: 653832590}
   - component: {fileID: 653832587}
   m_Layer: 0
   m_Name: Player
@@ -361,7 +360,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _playerName: Gentil
-  _currentHealth: {x: 2.61, y: -4.14, z: 1.44}
+  _currentHealth: {x: 0.78, y: -4.14, z: 1.44}
   _maxHealth: 84
   _speed: 0.11
   _damage: 1
@@ -400,24 +399,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
---- !u!114 &653832590
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 653832586}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 1f9539d0befd5ff4a963a2c97604f1f0, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  _playerName: 
-  _currentHealth: {x: 0, y: 0, z: 0}
-  _maxHealth: 0
-  _speed: 0
-  _damage: 0
-  rb: {fileID: 0}
 --- !u!1 &705507993
 GameObject:
   m_ObjectHideFlags: 0
@@ -565,8 +546,8 @@ MonoBehaviour:
   _currentHealth: {x: 0, y: 0, z: 0}
   _maxHealth: 0
   _speed: 0
-  _damage: 0
-  rb: {fileID: 0}
+  _damage: 2
+  rb: {fileID: 735419696}
 --- !u!54 &735419696
 Rigidbody:
   m_ObjectHideFlags: 0

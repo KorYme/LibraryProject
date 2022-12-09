@@ -8,6 +8,15 @@ using ToolLibrary;
 
 public class SceneModificationsEditorWindow : EditorWindow
 {
+    #region PARAMETERS
+    Vector2 _scrollPos;
+    bool _areParametersOpened;
+    bool _isHierarchised;
+    Color _colorGameObjectLabel;
+    Color _colorComponentLabel;
+    #endregion
+
+    #region CONTAINERS
     class Node
     {
         public GameObject _go;
@@ -21,44 +30,27 @@ public class SceneModificationsEditorWindow : EditorWindow
             _allChilds = nodes;
         }
     }
-
-    Vector2 _scrollPos;
-    bool _areParametersOpened;
-    bool _isHierarchised;
-    Color _colorParametersLabel;
-    Color _colorGameObjectLabel;
-    Color _colorComponentLabel;
-
-
     List<Type> _allTypes = new();
     Dictionary<GameObject, Dictionary<Component, Tuple<SerializedObject, List<FieldInfo>>>> _allComponents = new();
     Dictionary<GameObject, bool> _foldoutGameObject = new();
     Dictionary<Component, bool> _foldoutComponent = new();
     List<Node> _allNodes = new();
+    #endregion
 
-
-    [MenuItem("Fabien's courses/GD Tools/Scene Modifications")]
+    #region UNITY_METHODS
+    [MenuItem("Tools/Fabien's courses/Scene Modifications")]
     public static void OpenWindow()
     {
         SceneModificationsEditorWindow window = CreateWindow<SceneModificationsEditorWindow>("Scene Modifications");
     }
 
-
     public void OnEnable()
     {
         InitAllContainers();
-        Color transparent = new Color(0, 0, 0, 0);
-        if (_colorParametersLabel == transparent)
+        if (_colorComponentLabel == Color.clear && _colorGameObjectLabel == Color.clear)
         {
-            _colorParametersLabel = GUI.color;
-        }
-        if (_colorComponentLabel == transparent)
-        {
-            _colorComponentLabel = GUI.color;
-        }
-        if (_colorGameObjectLabel == transparent)
-        {
-            _colorGameObjectLabel = GUI.color;
+            _colorGameObjectLabel = Color.red;
+            _colorComponentLabel = Color.blue;
         }
     }
 
@@ -80,12 +72,10 @@ public class SceneModificationsEditorWindow : EditorWindow
             OpenAllFoldout(false);
         }
         EditorGUILayout.EndHorizontal();
-        if (_areParametersOpened = EditorGUILayout.Foldout(_areParametersOpened, KTLClass.DisplayTextWithColours("[PARAMETERS] ",
-            _colorParametersLabel), true, KTLClass.ToRichText("foldout")))
+        if (_areParametersOpened = EditorGUILayout.Foldout(_areParametersOpened, "[PARAMETERS]", true, KTLClass.ToRichText("foldout")))
         {
             EditorGUI.indentLevel++;
             _isHierarchised = EditorGUILayout.ToggleLeft(new GUIContent("Hierarchy"), _isHierarchised);
-            _colorParametersLabel = EditorGUILayout.ColorField(new GUIContent("Parameters color"), _colorParametersLabel);
             _colorGameObjectLabel = EditorGUILayout.ColorField(new GUIContent("Parameters color"), _colorGameObjectLabel);
             _colorComponentLabel = EditorGUILayout.ColorField(new GUIContent("Parameters color"), _colorComponentLabel);
             EditorGUI.indentLevel--;
@@ -172,7 +162,7 @@ public class SceneModificationsEditorWindow : EditorWindow
         EditorGUILayout.EndVertical();
         GUILayout.EndScrollView();
     }
-
+    #endregion
 
     #region INITIALIZATIONS
 
@@ -223,7 +213,7 @@ public class SceneModificationsEditorWindow : EditorWindow
 
                         if (attribute != null)
                         {
-                            if (attribute._type != GDModifAttribute.TYPEOBJECTUNITY.INSTANCE)
+                            if (!attribute._isASceneObject)
                             {
                                 continue;
                             }
@@ -266,12 +256,9 @@ public class SceneModificationsEditorWindow : EditorWindow
             }
         }
     }
-
     #endregion
 
-
     #region CHECKS
-
     private void CheckAllContainers()
     {
         CheckDictionnary();
@@ -340,12 +327,9 @@ public class SceneModificationsEditorWindow : EditorWindow
             }
         }
     }
-
     #endregion
 
-
     #region GUI_METHODS
-
     private void OpenAllFoldout(bool opened)
     {
         foreach (Component item in _foldoutComponent.Keys.ToArray())
@@ -393,7 +377,5 @@ public class SceneModificationsEditorWindow : EditorWindow
             }
         }
     }
-
     #endregion
-
 }

@@ -10,7 +10,7 @@ public class PlayerStats : MonoBehaviour
     [SerializeField]
     private string _playerName;
 
-    [GDModif]
+    [GDModif(false)]
     [SerializeField]
     private Vector3 _currentHealth;
 
