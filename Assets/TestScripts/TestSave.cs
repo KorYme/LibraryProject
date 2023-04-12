@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using KorYmeLibrary.SaveSystem;
 
 public class TestSave : MonoBehaviour, IDataSave
 {
