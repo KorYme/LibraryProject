@@ -1,6 +1,6 @@
 using UnityEngine;
 
-public class Test : MonoBehaviour
+public class TestEnumData : MonoBehaviour
 {
     //[ForceInterface(typeof(IWeapon))]
     //public Object weapon;
