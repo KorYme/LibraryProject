@@ -311,8 +311,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1243616913}
   - component: {fileID: 1243616914}
+  - component: {fileID: 1243616915}
   m_Layer: 0
-  m_Name: TestObject
+  m_Name: ---CodeGenerator---
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -345,6 +346,28 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 8d4823ba9121f444ea3ed58a32e7e9a6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+--- !u!114 &1243616915
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1243616912}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 36003722b135c7e459c774ae8341ef32, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _variableName:
+  - Type: 2
+    Name: Salut
+  - Type: 2
+    Name: Salut
+  _testValue: {x: 0, y: 0, z: 0, w: 0}
+  _className: MyGameDataTest
+  _folderName: SaveSystemClasses
+  _classCode: "namespace KorYmeLibrary.SaveSystem\n{\n\t[System.Serializable]\n\tpublic
+    class MyGameDataTest\n\t{\n\t\tpublic float _salut;\n\t\tpublic int _taGueule;\n\t}\n}"
 --- !u!1 &2080381064
 GameObject:
   m_ObjectHideFlags: 0
